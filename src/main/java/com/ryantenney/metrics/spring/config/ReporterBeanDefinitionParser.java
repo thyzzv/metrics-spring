@@ -23,6 +23,8 @@ import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.xml.AbstractSingleBeanDefinitionParser;
 import org.w3c.dom.Element;
 
+import com.yammer.metrics.Metrics;
+
 /**
  * Generic Yammer Metrics Reporter bean definition parser.  This parser assumes the following conventions in
  * order to create the Yammer Metrics reporter:
@@ -81,7 +83,12 @@ public class ReporterBeanDefinitionParser extends AbstractSingleBeanDefinitionPa
 	@Override
 	protected void doParse(final Element element, final BeanDefinitionBuilder builder) {
 		builder.setFactoryMethod(FACTORY_METHOD_NAME);
-		builder.addConstructorArgReference(element.getAttribute(METRICS_REGISTRY_ATTRIBUTE_NAME));
+		final String metricsRegistryRef = element.getAttribute(METRICS_REGISTRY_ATTRIBUTE_NAME);
+		if(metricsRegistryRef != null && !metricsRegistryRef.trim().isEmpty()) {
+			builder.addConstructorArgReference(metricsRegistryRef);
+		} else {
+			builder.addConstructorArgValue(Metrics.defaultRegistry());
+		}
 		builder.addConstructorArgValue(getProperties(builder.getBeanDefinition().getPropertyValues().getPropertyValues()));
 	}
 
