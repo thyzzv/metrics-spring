@@ -18,12 +18,9 @@ package com.ryantenney.metrics.spring.reporter;
 
 import java.util.concurrent.TimeUnit;
 
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.context.Lifecycle;
-
 import com.codahale.metrics.MetricFilter;
 
-public class FakeReporterFactoryBean extends AbstractScheduledReporterFactoryBean<FakeReporter> implements Lifecycle, DisposableBean {
+public class FakeReporterFactoryBean extends AbstractScheduledReporterFactoryBean<FakeReporter> {
 
 	// Required
 	public static final String PERIOD = "period";
