@@ -21,55 +21,50 @@ import org.aopalliance.aop.Advice;
 import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.aop.Pointcut;
 import org.springframework.aop.support.annotation.AnnotationMatchingPointcut;
-import org.springframework.core.Ordered;
 import org.springframework.util.ReflectionUtils.MethodFilter;
 
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
-import com.codahale.metrics.Timer.Context;
-import com.codahale.metrics.annotation.Timed;
+import com.ryantenney.metrics.annotation.Counted;
 
-class TimedMethodInterceptor extends AbstractMetricMethodInterceptor<Timed, Timer> implements Ordered {
+class CountedMethodInterceptor extends AbstractMetricMethodInterceptor<Counted, Counter> {
 
-	public static final Class<Timed> ANNOTATION = Timed.class;
+	public static final Class<Counted> ANNOTATION = Counted.class;
 	public static final Pointcut POINTCUT = new AnnotationMatchingPointcut(null, ANNOTATION);
 	public static final MethodFilter METHOD_FILTER = new AnnotationFilter(ANNOTATION);
 
-	public TimedMethodInterceptor(final MetricRegistry metricRegistry, final Class<?> targetClass) {
+	public CountedMethodInterceptor(final MetricRegistry metricRegistry, final Class<?> targetClass) {
 		super(metricRegistry, targetClass, ANNOTATION, METHOD_FILTER);
 	}
 
 	@Override
-	protected Object invoke(MethodInvocation invocation, Timer timer, Timed annotation) throws Throwable {
-		final Context timerCtx = timer.time();
+	protected Object invoke(MethodInvocation invocation, Counter counter, Counted annotation) throws Throwable {
 		try {
+			counter.inc();
 			return invocation.proceed();
 		}
 		finally {
-			timerCtx.close();
+			if (!annotation.monotonic()) {
+				counter.dec();
+			}
 		}
 	}
 
 	@Override
-	protected Timer buildMetric(MetricRegistry metricRegistry, String metricName, Timed annotation) {
-		return metricRegistry.timer(metricName);
+	protected Counter buildMetric(MetricRegistry metricRegistry, String metricName, Counted annotation) {
+		return metricRegistry.counter(metricName);
 	}
-
+	
 	@Override
-	protected String buildMetricName(Class<?> targetClass, Method method, Timed annotation) {
-		return Util.forTimedMethod(targetClass, method, annotation);
-	}
-
-	@Override
-	public int getOrder() {
-		return HIGHEST_PRECEDENCE;
+	protected String buildMetricName(Class<?> targetClass, Method method, Counted annotation) {
+		return Util.forCountedMethod(targetClass, method, annotation);
 	}
 
 	static AdviceFactory adviceFactory(final MetricRegistry metricRegistry) {
 		return new AdviceFactory() {
 			@Override
 			public Advice getAdvice(Object bean, Class<?> targetClass) {
-				return new TimedMethodInterceptor(metricRegistry, targetClass);
+				return new CountedMethodInterceptor(metricRegistry, targetClass);
 			}
 		};
 	}

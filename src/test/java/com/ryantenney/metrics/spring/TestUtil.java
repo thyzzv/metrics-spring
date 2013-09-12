@@ -1,12 +1,11 @@
-/*
- * Copyright 2012 Ryan W Tenney (http://ryan.10e.us)
- *            and Martello Technologies (http://martellotech.com)
+/**
+ * Copyright (C) 2012 Ryan W Tenney (ryan@10e.us)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *         http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -35,6 +34,7 @@ import com.codahale.metrics.Timer;
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
+import com.ryantenney.metrics.annotation.Counted;
 import com.ryantenney.metrics.annotation.InjectMetric;
 
 class TestUtil {
@@ -55,6 +55,10 @@ class TestUtil {
 
 	static String forExceptionMeteredMethod(Class<?> klass, Member member, ExceptionMetered annotation) {
 		return Util.forExceptionMeteredMethod(klass, member, annotation);
+	}
+
+	static String forCountedMethod(Class<?> klass, Member member, Counted annotation) {
+		return Util.forCountedMethod(klass, member, annotation);
 	}
 
 	static String forInjectMetricField(Class<?> klass, Member member, InjectMetric annotation) {
@@ -96,6 +100,13 @@ class TestUtil {
 		return metricRegistry.getMeters().get(metricName);
 	}
 
+	static Counter forCountedMethod(MetricRegistry metricRegistry, Class<?> clazz, String methodName) {
+		Method method = findMethod(clazz, methodName);
+		String metricName = forCountedMethod(clazz, method, method.getAnnotation(Counted.class));
+		log.info("Looking up counted method named '{}'", metricName);
+		return metricRegistry.getCounters().get(metricName);
+	}
+
 	static Metric forInjectMetricField(MetricRegistry metricRegistry, Class<?> clazz, String fieldName) {
 		Field field = findField(clazz, fieldName);
 		String metricName = forInjectMetricField(clazz, field, field.getAnnotation(InjectMetric.class));
@@ -132,6 +143,7 @@ class TestUtil {
 	}
 
 	private static Method findMethod(Class<?> clazz, String methodName) {
+		log.info("Looking for method {}.{}", clazz, methodName);
 		List<Method> methodsFound = new ArrayList<Method>();
 		for (Method method : clazz.getDeclaredMethods()) {
 			if (method.getName().equals(methodName)) {

@@ -1,12 +1,11 @@
-/*
- * Copyright 2012 Ryan W Tenney (http://ryan.10e.us)
- *            and Martello Technologies (http://martellotech.com)
+/**
+ * Copyright (C) 2012 Ryan W Tenney (ryan@10e.us)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *         http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,6 +23,7 @@ import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Gauge;
 import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
+import com.ryantenney.metrics.annotation.Counted;
 import com.ryantenney.metrics.annotation.InjectMetric;
 
 class Util {
@@ -45,6 +45,10 @@ class Util {
 
 	static String forExceptionMeteredMethod(Class<?> klass, Member member, ExceptionMetered annotation) {
 		return chooseName(annotation.name(), annotation.absolute(), klass, member, ExceptionMetered.DEFAULT_NAME_SUFFIX);
+	}
+
+	static String forCountedMethod(Class<?> klass, Member member, Counted annotation) {
+		return chooseName(annotation.name(), annotation.absolute(), klass, member);
 	}
 
 	static String forInjectMetricField(Class<?> klass, Member member, InjectMetric annotation) {

@@ -1,12 +1,11 @@
-/*
- * Copyright 2012 Ryan W Tenney (http://ryan.10e.us)
- *            and Martello Technologies (http://martellotech.com)
+/**
+ * Copyright (C) 2012 Ryan W Tenney (ryan@10e.us)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *         http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +15,7 @@
  */
 package com.ryantenney.metrics.spring;
 
+import static com.ryantenney.metrics.spring.TestUtil.forCountedMethod;
 import static com.ryantenney.metrics.spring.TestUtil.forExceptionMeteredMethod;
 import static com.ryantenney.metrics.spring.TestUtil.forGaugeField;
 import static com.ryantenney.metrics.spring.TestUtil.forGaugeMethod;
@@ -32,6 +32,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
@@ -40,6 +41,7 @@ import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Metered;
 import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.health.HealthCheckRegistry;
+import com.ryantenney.metrics.annotation.Counted;
 import com.ryantenney.metrics.spring.config.annotation.EnableMetrics;
 import com.ryantenney.metrics.spring.config.annotation.MetricsConfigurer;
 
@@ -103,6 +105,18 @@ public class EnableMetricsTest {
 			assertThat(meteredMethodMeter.getCount(), is(0L));
 			testBean.meteredMethod();
 			assertThat(meteredMethodMeter.getCount(), is(1L));
+
+			// Verify that the Meter's counter is incremented on method invocation
+			final Counter countedMethodMeter = forCountedMethod(metricRegistry, TestBean.class, "countedMethod");
+			assertNotNull(countedMethodMeter);
+			assertThat(countedMethodMeter.getCount(), is(0L));
+			testBean.countedMethod(new Runnable() {
+				@Override
+				public void run() {
+					assertThat(countedMethodMeter.getCount(), is(1L));
+				}
+			});
+			assertThat(countedMethodMeter.getCount(), is(0L));
 	
 			// Verify that the Meter's counter is incremented on method invocation
 			Meter exceptionMeteredMethodMeter = forExceptionMeteredMethod(metricRegistry, TestBean.class, "exceptionMeteredMethod");
@@ -164,6 +178,11 @@ public class EnableMetricsTest {
 
 		@Metered
 		public void meteredMethod() {}
+
+		@Counted
+		public void countedMethod(Runnable runnable) {
+			if (runnable != null) runnable.run();
+		}
 
 		@ExceptionMetered
 		public void exceptionMeteredMethod() {

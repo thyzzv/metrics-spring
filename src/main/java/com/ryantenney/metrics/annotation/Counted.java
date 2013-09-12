@@ -20,31 +20,27 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * An annotation requesting that a metric be injected
- * <p/>
- * Given a field like this:
- * <pre><code>
- *     \@InjectMetric
- *     public Meter someTimer;
- * </code></pre>
- * <p/>
- * A meter for the defining class with the name {@code someTimer} will be created. It will be up to the user
- * to mark the meter. This annotation can be used on fields of type Meter, Timer, Counter, and Histogram.
- */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface InjectMetric {
+@Target(ElementType.METHOD)
+public @interface Counted {
 
-	/**
-	 * The name of the metric.
-	 */
-	String name() default "";
+    /**
+     * The name of the counter.
+     */
+    String name() default "";
 
-	/**
-	 * The name of the type of events the meter is measuring.
-	 * Applies to Meter
-	 */
-	boolean absolute() default false;
+    /**
+     * If {@code true}, use the given name an as absolute name. If {@code false}, use the given name
+     * relative to the annotated class.
+     */
+    boolean absolute() default false;
+
+    /**
+     * If {@code false} (default), counter is decremented when the annotated
+     * method returns, counts current invocations of the annotated method.
+     * If {@code true}, counter increases monotonically, counts total number
+     * of invocations of the annotated method.
+     */
+    boolean monotonic() default false;
 
 }
